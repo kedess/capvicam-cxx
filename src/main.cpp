@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include "capture/capture.h"
+#include "mjpeg/mjpeg.h"
 
 namespace cvc = capvicam;
 
@@ -22,11 +23,18 @@ void callback([[maybe_unused]] const cvc::Buffer buffer, [[maybe_unused]] size_t
 
 int main() {
     signal(SIGINT, siginthandler);
+    auto th = std::thread([]{
+        cvc::MjpegService service;
+        service.run();
+    });
     try {
         cvc::Capture capture("/dev/video0", 1920, 1080);
         capture.run(callback);
     } catch ( std::exception & ex) {
         std::cout << "[ERROR]: " << ex.what() << std::endl;
+    }
+    if(th.joinable()) {
+        th.join();
     }
     return 0;
 }

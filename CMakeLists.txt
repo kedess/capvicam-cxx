@@ -29,6 +29,7 @@ add_compile_options(
 set(SRC_FILES
     src/main.cpp
     src/capture/capture.cpp
+    src/mjpeg/mjpeg.cpp
 )
 
 add_executable(${PROJECT_NAME} ${SRC_FILES})
