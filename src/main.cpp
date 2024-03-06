@@ -24,8 +24,12 @@ void callback([[maybe_unused]] const cvc::Buffer buffer, [[maybe_unused]] size_t
 int main() {
     signal(SIGINT, siginthandler);
     auto th = std::thread([]{
-        cvc::MjpegService service;
-        service.run();
+        try{
+            cvc::MjpegService service("localhost", 8000);
+            service.run();
+        } catch ( std::exception & ex) {
+            std::cout << "[ERROR]: " << ex.what() << std::endl;
+        }
     });
     try {
         cvc::Capture capture("/dev/video0", 1920, 1080);
