@@ -4,29 +4,52 @@
 #include <mutex>
 #include <condition_variable>
 #include <algorithm>
+#include <deque>
 
 #include "capture/capture.h"
 #include "mjpeg/mjpeg.h"
+#include "circular-buffer/circular-buffer.h"
+#include "processing/processing.h"
 
 namespace cvc = capvicam;
 
 volatile std::sig_atomic_t signal_num = -1;
+
+std::mutex processing_mutex;
+std::condition_variable processing_condvar;
+cvc::CircularBuffer image_processing_queue(8);
+
+std::mutex mjpeg_mutex;
+std::condition_variable mjpeg_condvar;
+cvc::CircularBuffer image_mjpeg_queue(8);
 
 void siginthandler(int param) {
     signal_num = param;
     std::cout << "[INFO ]: Stopping application. Received signal SIGINT" << std::endl;
 }
 
-void callback([[maybe_unused]] const cvc::Buffer buffer, [[maybe_unused]] size_t id) {
-    // std::cout << "[DEBUG]: received buffer, id = " << id << std::endl;
+void callback(const cvc::Buffer buffer, size_t id) {
+    std::lock_guard lk{processing_mutex};
+    if (!image_processing_queue.full()) {
+        image_processing_queue.push(buffer, id);
+        processing_condvar.notify_one();
+    }
 }
 
 int main() {
     signal(SIGINT, siginthandler);
-    auto th = std::thread([]{
-        try{
+    auto mjpeg_thread = std::thread([]{
+        try {
             cvc::MjpegService service("localhost", 8000);
             service.run();
+        } catch ( std::exception & ex) {
+            std::cout << "[ERROR]: " << ex.what() << std::endl;
+        }
+    });
+    auto processing_thread = std::thread([]{
+        try {
+            cvc::Processing processing;
+            processing.run();
         } catch ( std::exception & ex) {
             std::cout << "[ERROR]: " << ex.what() << std::endl;
         }
@@ -37,8 +60,11 @@ int main() {
     } catch ( std::exception & ex) {
         std::cout << "[ERROR]: " << ex.what() << std::endl;
     }
-    if(th.joinable()) {
-        th.join();
+    if(mjpeg_thread.joinable()) {
+        mjpeg_thread.join();
+    }
+    if(processing_thread.joinable()) {
+        processing_thread.join();
     }
     return 0;
 }

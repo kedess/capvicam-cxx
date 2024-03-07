@@ -7,8 +7,16 @@
 #include <arpa/inet.h>
 #include <errno.h>
 #include <string.h>
+#include <mutex>
+#include <condition_variable>
+#include <chrono>
+#include "../circular-buffer/circular-buffer.h"
 
 extern volatile std::sig_atomic_t signal_num;
+
+extern std::mutex mjpeg_mutex;
+extern std::condition_variable mjpeg_condvar;
+extern capvicam::CircularBuffer image_mjpeg_queue;
 
 static int set_nonblocking_socket(int fd) {
     int flags;
@@ -20,8 +28,15 @@ static int set_nonblocking_socket(int fd) {
 namespace capvicam {
     void MjpegService::run() {
         while (-1 == signal_num) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            // std::cout << "Hello MjpegService" << std::endl;
+            std::unique_lock lk{mjpeg_mutex};
+            mjpeg_condvar.wait_for(lk, std::chrono::seconds(1), [] {
+                return !image_mjpeg_queue.empty();
+            });
+            if (!image_mjpeg_queue.empty()) {
+                ImageBuffer & value = image_mjpeg_queue.front();
+                std::cout << "[DEBUG]: received buffer (mjpeg), id = " << value.id << std::endl;
+                image_mjpeg_queue.pop();
+            }
         }
     }
     void MjpegService::create_socket(const char* address, unsigned port) {
