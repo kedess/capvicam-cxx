@@ -40,7 +40,7 @@ int main() {
     signal(SIGINT, siginthandler);
     auto mjpeg_thread = std::thread([]{
         try {
-            cvc::MjpegService service("localhost", 8000);
+            cvc::MjpegService service("0.0.0.0", 8000);
             service.run();
         } catch ( std::exception & ex) {
             std::cout << "[ERROR]: " << ex.what() << std::endl;
@@ -56,6 +56,7 @@ int main() {
     });
     try {
         cvc::Capture capture("/dev/video0", 1920, 1080);
+        // cvc::Capture capture("/dev/video0", 640, 480);
         capture.run(callback);
     } catch ( std::exception & ex) {
         std::cout << "[ERROR]: " << ex.what() << std::endl;

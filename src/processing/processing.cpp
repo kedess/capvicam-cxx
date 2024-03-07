@@ -32,7 +32,7 @@ namespace capvicam {
                 std::memcpy(buffer->data, value.data, value.len);
                 buffer->len = value.len;
                 buffer->id = value.id;
-                std::cout << "[DEBUG]: received buffer (processing), id = " << value.id << std::endl;
+                // std::cout << "[DEBUG]: received buffer (processing), id = " << value.id << std::endl;
                 image_processing_queue.pop();
             }
             lk.unlock();

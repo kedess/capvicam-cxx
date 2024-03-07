@@ -1,8 +1,7 @@
 #pragma once
 #include <iostream>
 #include "../capture/capture.h"
-
-constexpr size_t ImageBufferMaxSize = 1024 * 1024 * 8;
+#include "../constants.h"
 
 namespace capvicam {
     struct ImageBuffer {
