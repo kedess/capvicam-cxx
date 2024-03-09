@@ -39,7 +39,7 @@ namespace capvicam {
             if (update) {
                 // Поступило новое изображение. Обрабатываем
                 {
-                    std::lock_guard lk{mjpeg_mutex};
+                    std::lock_guard lk_{mjpeg_mutex};
                     if (!image_mjpeg_queue.full()) {
                         image_mjpeg_queue.push(buffer->data, buffer->len, buffer->id);
                         mjpeg_condvar.notify_one();
