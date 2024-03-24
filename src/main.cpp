@@ -1,14 +1,14 @@
-#include <iostream>
-#include <csignal>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
 #include <algorithm>
+#include <condition_variable>
+#include <csignal>
 #include <deque>
+#include <iostream>
+#include <mutex>
+#include <thread>
 
 #include "capture/capture.h"
-#include "mjpeg/mjpeg.h"
 #include "circular-buffer/circular-buffer.h"
+#include "mjpeg/mjpeg.h"
 #include "processing/processing.h"
 
 namespace cvc = capvicam;
@@ -25,7 +25,8 @@ cvc::CircularBuffer image_mjpeg_queue(8);
 
 void siginthandler(int param) {
     signal_num = param;
-    std::cout << "[INFO ]: Stopping application. Received signal SIGINT" << std::endl;
+    std::cout << "[INFO ]: Stopping application. Received signal SIGINT"
+              << std::endl;
 }
 
 void callback(const cvc::Buffer buffer, size_t id) {
@@ -38,19 +39,19 @@ void callback(const cvc::Buffer buffer, size_t id) {
 
 int main() {
     signal(SIGINT, siginthandler);
-    auto mjpeg_thread = std::thread([]{
+    auto mjpeg_thread = std::thread([] {
         try {
             cvc::MjpegService service("0.0.0.0", 8000);
             service.run();
-        } catch ( std::exception & ex) {
+        } catch (std::exception &ex) {
             std::cout << "[ERROR]: " << ex.what() << std::endl;
         }
     });
-    auto processing_thread = std::thread([]{
+    auto processing_thread = std::thread([] {
         try {
             cvc::Processing processing;
             processing.run();
-        } catch ( std::exception & ex) {
+        } catch (std::exception &ex) {
             std::cout << "[ERROR]: " << ex.what() << std::endl;
         }
     });
@@ -58,13 +59,13 @@ int main() {
         cvc::Capture capture("/dev/video0", 1920, 1080);
         // cvc::Capture capture("/dev/video0", 640, 480);
         capture.run(callback);
-    } catch ( std::exception & ex) {
+    } catch (std::exception &ex) {
         std::cout << "[ERROR]: " << ex.what() << std::endl;
     }
-    if(mjpeg_thread.joinable()) {
+    if (mjpeg_thread.joinable()) {
         mjpeg_thread.join();
     }
-    if(processing_thread.joinable()) {
+    if (processing_thread.joinable()) {
         processing_thread.join();
     }
     return 0;

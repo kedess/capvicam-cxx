@@ -2,10 +2,9 @@
 
 namespace capvicam {
     class Processing {
-        public:
-            Processing() {
-
-            }
-            void run();
+    public:
+        Processing() {
+        }
+        void run();
     };
-}
+} // namespace capvicam
